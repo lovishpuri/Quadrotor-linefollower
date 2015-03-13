@@ -87,7 +87,7 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
-  ros::Publisher perpendicular_distance=nh_.advertise<perpendicular>("perpendicular_distance_centre",10);;
+  ros::Publisher perpendicular_distance=nh_.advertise<perpendicular>("perpendicular_distance_center",10);;
   
 public:
   ImageConverter()
@@ -191,6 +191,7 @@ public:
          } 
       //-------------------finding perpendicular distances to lines----------------------//
          int x=(cv_ptr->image.cols)/2,y=(cv_ptr->image.rows)/2;
+      
          Point imageCenter(x,y);
          int projection_x,projection_y;
         for(size_t i=0;i<lines.size();i++)
@@ -223,6 +224,7 @@ public:
           perp.projection_x=projection_x;
           perp.projection_y=projection_y;
           perp.perpendicular_distance=perpendicularDist;
+ 
           perpendicular_distance.publish(perp);                         
           circle(keyPoints,imageCenter,(int)perpendicularDist,Scalar(0,0,200));   //A red circle having a radius equal to the perpendicular distance is drawn
          }
