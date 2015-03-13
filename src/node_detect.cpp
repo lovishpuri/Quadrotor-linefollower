@@ -87,7 +87,7 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
-  ros::Publisher perpendicular_distance=nh_.advertise<perpendicular>("perpendicular_distance_centre",10);;
+  ros::Publisher perpendicular_distance=nh_.advertise<perpendicular>("perpendicular_distance_center",10);;
   
 public:
   ImageConverter()
