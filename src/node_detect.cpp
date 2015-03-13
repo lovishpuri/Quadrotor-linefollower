@@ -224,8 +224,9 @@ public:
           perp.projection_x=projection_x;
           perp.projection_y=projection_y;
           perp.perpendicular_distance=perpendicularDist;
- 
-          perpendicular_distance.publish(perp);                         
+          
+          perpendicular_distance.publish(perp);      
+          line(keyPoints,imageCenter, Point(projection_x,projection_y),Scalar(20,20,255));                   
           circle(keyPoints,imageCenter,(int)perpendicularDist,Scalar(0,0,200));   //A red circle having a radius equal to the perpendicular distance is drawn
          }
     // Update GUI Window
