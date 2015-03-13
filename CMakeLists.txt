@@ -8,8 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   roscpp
-  rospy
-  genmsg
+  message_generation
   sensor_msgs
   std_msgs
 )
@@ -48,11 +47,12 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
+ add_message_files(
+   FILES
+   perpendicular.msg
 #   Message1.msg
 #   Message2.msg
-# )
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -71,8 +71,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-   sensor_msgs
    std_msgs
+   sensor_msgs
  )
 
 ###################################
@@ -87,7 +87,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES quad
-#  CATKIN_DEPENDS cv_bridge image_transport roscpp sensor_msgs std_msgs
+#  CATKIN_DEPENDS cv_bridge message_runtime image_transport roscpp     #sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
@@ -172,3 +172,7 @@ include_directories(
 add_executable(line_detect src/line_detect.cpp)
 target_link_libraries(line_detect ${catkin_LIBRARIES})
 add_dependencies(line_detect quad_generate_messages_cpp)
+
+add_executable(node_detect src/node_detect.cpp)
+target_link_libraries(node_detect ${catkin_LIBRARIES})
+add_dependencies(node_detect quad_generate_messages_cpp)

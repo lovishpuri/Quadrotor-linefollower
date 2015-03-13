@@ -1,4 +1,3 @@
-#include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
@@ -25,7 +24,7 @@ public:
   ImageConverter()
     : it_(nh_)
   {
-    // Subscrive to input video feed and publish output video feed
+    // Subscribe to input video feed and publish output video feed
     image_sub_ = it_.subscribe("/ardrone/bottom/image_raw", 1,&ImageConverter::imageCb, this);
     image_pub_ = it_.advertise("/image_converter/output_video", 1);
 
@@ -50,10 +49,7 @@ public:
       return;
     }
 
-    // Draw an example circle on the video stream
-    //if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)
-     // cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
-    
+   
     //-----------Canny Detection---------------//
 
     /// Reduce noise with a kernel 3x3
