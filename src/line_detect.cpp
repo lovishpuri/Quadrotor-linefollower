@@ -12,6 +12,60 @@ Mat canny_output,hough_output;
 int lowThreshold=100,upperThreshold=100,max_lowThreshold=255,max_upperThreshold=255;
 vector<Vec2f> lines;
 
+// void findEndPoints(float rho,float theta,int rows,int cols,Point *pt1,Point *pt2)//-----Was trying something earlier. Not necessary-------//
+// {
+//   double a=cos(theta),b=sin(theta);
+//   pt1->x=(int)(rho/a);
+//   pt2->x=(int)((rho-rows*b)/a);
+//   if(theta!=0||theta!=CV_PI)
+//   {
+//        //---------Checking for the upper point----------//
+//     if(pt1->x>=cols)
+//       {
+//         pt1->x=cols-1;
+//         pt1->y=(int)((rho-a*(cols-1))/b);
+//       }
+//     else if(pt1->x<0)
+//       {
+//         pt1->x=0;
+//         pt1->y=(int)(rho/b);
+//       }
+//     else
+//       {
+//         pt1->y=0;
+//       }
+//     //---------Checking for the lower point----------//
+//     if(pt2->x>=cols)
+//       {
+//         pt2->x=cols-1;
+//         pt2->y=(int)((rho-a*(cols-1))/b);
+//       }
+//     else if(pt2->x<0)
+//       {
+//         pt2->x=0;
+//         pt2->y=(int)(rho/b);
+//       }
+//     else
+//       {
+//         pt2->y=rows-1;
+//       } 
+//   }
+//   else if(theta==0)
+//   {
+//     pt1->x=rho;
+//     pt2->x=rho;
+//     pt1->y=0;
+//     pt2->y=rows-1;
+//   }
+//   else
+//   {
+//     pt1->x=0;
+//     pt1->y=rho;
+//     pt2->x=cols-1;
+//     pt2->y=rho;
+//   }
+ 
+// }
 
 class ImageConverter
 {

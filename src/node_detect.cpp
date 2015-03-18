@@ -16,60 +16,12 @@ Mat canny_output,hough_output,keyPoints;
 int lowThreshold=100,upperThreshold=100,max_lowThreshold=255,max_upperThreshold=255;
 vector<Vec2f> houghLines,lines;
 
-// void findEndPoints(float rho,float theta,int rows,int cols,Point *pt1,Point *pt2)//-----Was trying something earlier. Not necessary-------//
-// {
-//   double a=cos(theta),b=sin(theta);
-//   pt1->x=(int)(rho/a);
-//   pt2->x=(int)((rho-rows*b)/a);
-//   if(theta!=0||theta!=CV_PI)
-//   {
-//        //---------Checking for the upper point----------//
-//     if(pt1->x>=cols)
-//       {
-//         pt1->x=cols-1;
-//         pt1->y=(int)((rho-a*(cols-1))/b);
-//       }
-//     else if(pt1->x<0)
-//       {
-//         pt1->x=0;
-//         pt1->y=(int)(rho/b);
-//       }
-//     else
-//       {
-//         pt1->y=0;
-//       }
-//     //---------Checking for the lower point----------//
-//     if(pt2->x>=cols)
-//       {
-//         pt2->x=cols-1;
-//         pt2->y=(int)((rho-a*(cols-1))/b);
-//       }
-//     else if(pt2->x<0)
-//       {
-//         pt2->x=0;
-//         pt2->y=(int)(rho/b);
-//       }
-//     else
-//       {
-//         pt2->y=rows-1;
-//       } 
-//   }
-//   else if(theta==0)
-//   {
-//     pt1->x=rho;
-//     pt2->x=rho;
-//     pt1->y=0;
-//     pt2->y=rows-1;
-//   }
-//   else
-//   {
-//     pt1->x=0;
-//     pt1->y=rho;
-//     pt2->x=cols-1;
-//     pt2->y=rho;
-//   }
- 
-// }
+struct GROUP{
+  float rho;
+  float theta;
+  vector<int> index;
+};
+
 
 ///**********GIVEN TWO LINES THIS FUNCTION FINDS THE INTERSECTION POINT*********************//
 void findInterscetion(float rho1,float theta1,float rho2,float theta2,int rows,int cols,Point *pt)
@@ -98,11 +50,16 @@ public:
     image_pub_ = it_.advertise("/image_converter/output_video", 1);
    // perpendicular_distance=nh_.advertise<perpendicular>("perpendicular_distance_centre",1);
     cv::namedWindow(OPENCV_WINDOW);
+    cv::namedWindow("keyPoints");
+    cv::namedWindow("lines");
+
   }
 
   ~ImageConverter()
   {
     cv::destroyWindow(OPENCV_WINDOW);
+    cv::destroyWindow("keyPoints");
+    cv::destroyWindow("lines");
   }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -135,22 +92,76 @@ public:
     HoughLines(canny_output, houghLines, 1, CV_PI/180, 100, 0, 0 );
 
 
-    //---------------finding mean of the right and left edges of a lane---------------//
+    //---------------finding mean of the all similar groups---------------//
       lines.clear();   // we push the mean of the two edges to a vector named lines
+     
+      
+      GROUP group[50];
+      int groupCount=0; 
+      
       for( size_t i = 0; i < houghLines.size(); i++ )
       {
         float theta= houghLines[i][1] ,rho= houghLines[i][0];
-            
-            for(size_t j = i+1; j < houghLines.size(); j++)
-            {
-              if(fabs(theta-houghLines[j][1])<0.4)      //We will find intersection only if points are not parallel
+       // cout<<rho<<" "<<theta<<" ";
+        int flag=0;
+        if(groupCount==0)
+        {
+              
+              group[groupCount].rho=rho;
+              group[groupCount].theta=theta;
+              group[groupCount].index.clear();
+              group[groupCount].index.push_back(i);
+              ++groupCount;
+            //  cout<<"initial";
+        }
+        else
+        {
+             for(int j=0;j<groupCount;j++)
               {
-                      float meanRho=(houghLines[i][0]+houghLines[j][0])/2;
-                      lines.push_back(Vec2f(meanRho,houghLines[i][1]));
-                   
+                float a=fabs(rho-group[j].rho);
+                float b=fabs(theta-group[j].theta);
+                //cout<<"diff a="<<a<<" b="<<b<<" ";
+
+                if((a<35)&&(b< 0.15))
+                  {
+                    group[j].index.push_back(i);
+                    flag=1;
+                      // cout<<"old";
+                    break;     
+                  }
               }
-            }
+              if(!flag)
+              {
+                   
+                    group[groupCount].rho=rho;
+                    group[groupCount].theta=theta;
+                    group[groupCount].index.clear();
+                    group[groupCount].index.push_back(i);
+                    ++groupCount;
+                    // cout<<"new";
+              }
+        }
+
+       
       }
+
+      for(int i=0;i<groupCount;i++)
+      {
+        float rhoSum=0,thetaSum=0;
+       // cout<<"Group "<<i<<" : ";
+        for(int j=0;j<group[i].index.size();j++)
+        {
+          //cout<<houghLines[group[i].index[j]][0]<<" "<<houghLines[group[i].index[j]][1]<<" ";
+          rhoSum+=houghLines[group[i].index[j]][0];
+          //thetaSum+=houghLines[group[i].index[j]][1];
+        }
+        //cout<<endl;
+        float meanRho=rhoSum/group[i].index.size();
+       // float meanTheta=thetaSum/group[i].index.size();
+        //lines.push_back(Vec2f(meanRho,meanTheta));
+        lines.push_back(Vec2f(meanRho,group[i].theta));
+      }
+     // cout<<houghLines.size()<<" "<<groupCount<<endl;
     //----------------displaying only the mean lines-------------------//
      for( size_t i = 0; i < lines.size(); i++ )
     {
@@ -227,13 +238,15 @@ public:
           
           perpendicular_distance.publish(perp);      
           line(keyPoints,imageCenter, Point(projection_x,projection_y),Scalar(20,20,255));                   
-          circle(keyPoints,imageCenter,(int)perpendicularDist,Scalar(0,0,200));   //A red circle having a radius equal to the perpendicular distance is drawn
+          circle(keyPoints,imageCenter,(int)perpendicularDist,Scalar(238,238,175));   //A red circle having a radius equal to the perpendicular distance is drawn
          }
     // Update GUI Window
   
  
     
-    cv::imshow(OPENCV_WINDOW, keyPoints);
+    cv::imshow(OPENCV_WINDOW, canny_output);
+    cv::imshow("keyPoints", keyPoints);
+    cv::imshow("lines", hough_output);
     cv::waitKey(3);
     
     // Output modified video stream
