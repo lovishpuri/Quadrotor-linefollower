@@ -21,7 +21,7 @@ struct GROUP{
   float theta;
   vector<int> index;
 };
-
+int turn=0;    //check for turn
 
 ///**********GIVEN TWO LINES THIS FUNCTION FINDS THE INTERSECTION POINT*********************//
 void findInterscetion(float rho1,float theta1,float rho2,float theta2,int rows,int cols,Point *pt)
@@ -40,7 +40,7 @@ class ImageConverter
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
   ros::Publisher perpendicular_distance=nh_.advertise<perpendicular>("perpendicular_distance_center",10);;
-  
+   ros::Publisher perpendicular_distance_horizontal=nh_.advertise<perpendicular>("perpendicular_distance_center_horizontal",10);;//for horizontal
 public:
   ImageConverter()
     : it_(nh_)
@@ -160,7 +160,7 @@ public:
        // float meanTheta=thetaSum/group[i].index.size();
         //lines.push_back(Vec2f(meanRho,meanTheta));
         lines.push_back(Vec2f(meanRho,group[i].theta));
-      }
+      }+
      // cout<<houghLines.size()<<" "<<groupCount<<endl;
     //----------------displaying only the mean lines-------------------//
      for( size_t i = 0; i < lines.size(); i++ )
@@ -236,10 +236,75 @@ public:
           perp.projection_y=projection_y;
           perp.perpendicular_distance=perpendicularDist;
           
-          perpendicular_distance.publish(perp);      
+          //perpendicular_distance.publish(perp);      
           line(keyPoints,imageCenter, Point(projection_x,projection_y),Scalar(20,20,255));                   
           circle(keyPoints,imageCenter,(int)perpendicularDist,Scalar(238,238,175));   //A red circle having a radius equal to the perpendicular distance is drawn
          }
+          // my code
+         double closest_vertical [2] = {99999,999999};
+          double closest_horizontal [2] = {99999,999999};
+         for(int m = 0; m < distances.size(); m++)
+         {
+            float theta= lines[m][1] ,rho= lines[m][0];
+            //closest vertical line
+            ROS_INFO("%.2f",theta);
+            if(theta < 0.175 && theta > -0.175 && distances[m] < closest_vertical[1])
+             {
+              closest_vertical[1] = distances[m];
+              closest_vertical[0] = m;
+            }
+            //for horizontal
+            else if(theta < 1.745 && theta > 1.396 && distances[m] < closest_horizontal[1])
+            {
+              closest_horizontal[1] = distances[m];
+              closest_horizontal[0] = m;
+            } 
+           
+         }
+          
+         
+         
+         
+         
+         Mat choosen(keyPoints.rows, keyPoints.cols, CV_8UC1, Scalar(0));
+         float crho = lines[(int)closest_vertical[0]][0], ctheta = lines[(int)closest_vertical[0]][1];
+         Point cpt1, cpt2;
+         double ca = cos(ctheta), cb = sin(ctheta);
+         double cx0 = ca*crho, cy0 = cb*crho;
+         cpt1.x = cvRound(cx0 + 1000*(-cb));
+         cpt1.y = cvRound(cy0 + 1000*(ca));
+         cpt2.x = cvRound(cx0 - 1000*(-cb));
+         cpt2.y = cvRound(cy0 - 1000*(ca));
+         //for horizontal
+         float crho2 = lines[(int)closest_horizontal[0]][0], ctheta2 = lines[(int)closest_horizontal[0]][1];
+         Point cpt1h, cpt2h;
+         double ca2 = cos(ctheta2), cb2 = sin(ctheta2);
+         double cx02 = ca2*crho2, cy02 = cb2*crho2;
+         cpt1h.x = cvRound(cx02 + 1000*(-cb2));
+         cpt1h.y = cvRound(cy02 + 1000*(ca2));
+         cpt2h.x = cvRound(cx02 - 1000*(-cb2));
+         cpt2h.y = cvRound(cy02 - 1000*(ca2));
+         
+         //publish data here finally
+         
+         perp.rho=crho;
+         perp.theta=ctheta;
+         perp.perpendicular_distance=closest_vertical[1];
+         if(turn==0)
+         perpendicular_distance.publish(perp);
+         
+          //publish for horizontal
+          perp.rho=crho2;
+         perp.theta=ctheta2;
+         perp.perpendicular_distance_horizontal=closest_horizontal[1];
+         if(turn==0)
+         perpendicular_distance_horizontal.publish(perp);
+         
+         line(choosen, cpt1h, cpt2h, Scalar(255), 4, CV_AA);
+         line(choosen, cpt1, cpt2, Scalar(255), 4, CV_AA);
+         cv::imshow("choosen", choosen);
+
+         
     // Update GUI Window
   
  
